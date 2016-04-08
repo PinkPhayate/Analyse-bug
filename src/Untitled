@@ -1,0 +1,15 @@
+import csv
+f = open('./../slr-versionc-short.csv','rb')
+dataReader = csv.reader(f)
+list = []
+flag = False
+for row in dataReader :
+    # print list
+    for index in row :
+        if index == curr_version:
+            flag = True
+
+        if flag :
+            list.append(index)
+
+    print list
