@@ -1,13 +1,13 @@
 This repository is for thesis.
+======
 
-*Feature
+##Feature
+###./src
+####bug_analuze.py
+You can do crawling.
 
-./src
-  bug_analuze.py
-  You can do crawling.
-
-  draw_figure.py
+####draw_figure.py
   You can draw graph by  matplotlib.pyplot
 
-  ex**.py
+####ex**.py
   You can create by logistic regression model imported by statsmodels.
