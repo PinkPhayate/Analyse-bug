@@ -18,6 +18,12 @@ def create_df_ref (filename) :
     rfn_df = df[['fileName', 'TCchar', 'LOC', 'N', 'NN', 'NF', 'fault','chum','relatedChum','delectChum','ncdChum', 'intercept']]
     return rfn_df
 
+def nrmlize(df) :
+    ndf = df[['TCchar', 'LOC', 'N', 'NN', 'NF','chum','relatedChum','delectChum','ncdChum']]
+    ndf = ndf.div(ndf.sum(1),axis=0)
+    df =  df[[ 'fault', 'intercept']]
+    df = pd.concat([df,ndf] ,axis=1)
+    return df
 
 def evaluate_ex(df,evals):
     global THRESHOLD
@@ -25,7 +31,7 @@ def evaluate_ex(df,evals):
 
     evals_df = pd.DataFrame(evals)
     df = pd.concat([df,evals_df] ,axis=1)
-    df = df.rename(columns={0:'evaluation'})
+    # df.rename(columns={0:'fault'})
 
     nm = len(df)
     np = 0.0
@@ -34,8 +40,9 @@ def evaluate_ex(df,evals):
     # df = pd.DataFrame(df)
     for row in df.iterrows():
         s = row[-1]
-        value = s['evaluation']
+        value = s[-1]
         actual = s['fault']
+        # print (value, actual)
 
         if value > THRESHOLD:
             np += 1
@@ -53,10 +60,12 @@ def evaluate_ex(df,evals):
 
     return df
 
+
 if __name__ == '__main__':
-    ex1()
+    ex4()
 
-def ex1():
+def ex4():
+
     global record
     global THRESHOLD
     list = version.get_version_list()
@@ -65,13 +74,13 @@ def ex1():
         if curr_ver != '10.10.2.0':
             next_version = version.get_next_version(curr_ver)
             print curr_ver
-            print next_version
+            # print next_version
 
             record = []
             record.append(curr_ver)
-            filename = './../data/metrics/METRICS_V' + curr_ver + '.csv'
-            df = create_df_ref(filename)
-
+            df = create_df_ref('./../data/metrics/METRICS_V' + curr_ver + '.csv')
+            # normalize
+            df = nrmlize(df)
 
             # dependent value
             dv_data = df['fault']
@@ -80,7 +89,11 @@ def ex1():
 
             # create mdl
             logit = sm.Logit(dv_data, ev_data)
-            result = logit.fit()
+            try:
+                result = logit.fit()
+            except:
+                print curr_ver + 'is singular.'
+                # result = logit.fit(method='bfgs')
             # print result.summary()
 
             # get coefficients
@@ -89,61 +102,21 @@ def ex1():
 
             # create model used evaluatopn_ex
             df = create_df_ref('./../data/metrics/METRICS_V' + next_version + '.csv')
+            # normalize
+            df = nrmlize(df)
             ev_data = df[['TCchar', 'LOC', 'N', 'NN', 'NF','chum','relatedChum','delectChum','ncdChum','intercept']]
 
             # operate evaluation_ex
             logit_odds = ev_data.dot(coef)
+            print '---logit_odds---'
+            print logit_odds
             evals = logit.cdf(logit_odds)
-            df = evaluate_ex(df,evals)
+            print '---evals---'
+            print evals
 
             # operate evaluation_ex
-            pd.DataFrame(df).to_csv( './../data/result/ex1_ref/result_' + curr_ver + 'ex1_ref.csv', index=False, cols=None )
+            df = evaluate_ex(df,evals)
+            pd.DataFrame(df).to_csv( './../data/result/ex4_ref/result_' + curr_ver + 'ex4_ref.csv', index=False )
             records.append(record)
 
-    pd.DataFrame(records).to_csv( './../data/result/record_ex1_ref_' + str(THRESHOLD) +'.csv', index=False, cols=None )
-def ex1(threshold):
-    global record
-    global THRESHOLD
-    THRESHOLD = threshold
-    list = version.get_version_list()
-    records = []
-    for curr_ver in list :
-        if curr_ver != '10.10.2.0':
-            next_version = version.get_next_version(curr_ver)
-            print curr_ver
-            print next_version
-
-            record = []
-            record.append(curr_ver)
-            filename = './../data/metrics/METRICS_V' + curr_ver + '.csv'
-            df = create_df_ref(filename)
-
-
-            # dependent value
-            dv_data = df['fault']
-            # explanatory value
-            ev_data = df[['TCchar', 'LOC', 'N', 'NN', 'NF','chum','relatedChum','delectChum','ncdChum','intercept']]
-
-            # create mdl
-            logit = sm.Logit(dv_data, ev_data)
-            result = logit.fit()
-            # print result.summary()
-
-            # get coefficients
-            params = result.params.values
-            coef = pd.Series(params, index=['TCchar', 'LOC', 'N', 'NN', 'NF','chum','relatedChum','delectChum','ncdChum','intercept'])
-
-            # create model used evaluatopn_ex
-            df = create_df_ref('./../data/metrics/METRICS_V' + next_version + '.csv')
-            ev_data = df[['TCchar', 'LOC', 'N', 'NN', 'NF','chum','relatedChum','delectChum','ncdChum','intercept']]
-
-            # operate evaluation_ex
-            logit_odds = ev_data.dot(coef)
-            evals = logit.cdf(logit_odds)
-            df = evaluate_ex(df,evals)
-
-            # operate evaluation_ex
-            pd.DataFrame(df).to_csv( './../data/result/ex1_ref/result_' + curr_ver + 'ex1_ref.csv', index=False, cols=None )
-            records.append(record)
-
-    pd.DataFrame(records).to_csv( './../data/result/record_ex1_ref_' + str(THRESHOLD) +'.csv', index=False, cols=None )
+    pd.DataFrame(records).to_csv( './../data/result/record_ex4_ref_' + str(THRESHOLD) +'.csv', index=False, cols=None )

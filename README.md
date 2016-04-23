@@ -1,6 +1,13 @@
-This repository is for thesis which analyze bug.
+This repository is for thesis.
 
-This repository has two kind of program.
-One is for web clawling. Another is for analyzing statistically.
+*Feature
 
-This program analyzed where modules has bug by information got from software.
+./src
+  bug_analuze.py
+  You can do crawling.
+
+  draw_figure.py
+  You can draw graph by  matplotlib.pyplot
+
+  ex**.py
+  You can create by logistic regression model imported by statsmodels.
